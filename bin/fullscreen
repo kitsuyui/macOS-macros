@@ -1,0 +1,73 @@
+#!/usr/bin/env osascript -l JavaScript
+
+const DELAY_ANIMATION_ACTIVATE_APP = .5;
+const DELAY_ANIMATION_FULLSCREEN = .5;
+const DELAY_ANIMATION_AX_RAISE = 1.0;
+
+const MENU_ITEM_NAMES = [
+  'Toggle Full Screen',
+  'Enter Full Screen',
+];
+
+function run(...argv) {
+  runMain(...argv);
+}
+
+const runMain = (argv) => {
+  const reactivateAppName = getFrontMostAppName();
+  for (const appName of argv) {
+    if (!isAppRunning(appName)) {
+      console.log(`Skipping (Not Running): ${appName}`);
+      continue;
+    }
+    console.log(`Enter Full Screen: ${appName}`);
+    fullscreenByClickingMenuItem(appName);
+  }
+  Application(reactivateAppName).activate();
+}
+
+const fullscreenByClickingMenuItem = (appName) => {
+  const seApp = SEApp(appName);
+  Application(appName).activate();
+  delay(DELAY_ANIMATION_ACTIVATE_APP);
+  for (const window of seApp.windows()) {
+    if (isWindowFullScreen(window)) {
+      continue;
+    }
+    for (const menuBar of seApp.menuBars()) {
+      const view = menuBar.menuBarItems['View'];
+      const menuItems = [].concat(...view.menus.menuItems());
+      for (const menuItem of menuItems) {
+        if (!isFullScreenMenuItem(menuItem)) {
+          continue;
+        }
+        menuItem.click();
+        delay(DELAY_ANIMATION_FULLSCREEN);
+      }
+    }
+  }
+}
+
+const isWindowFullScreen = (window) =>
+  Boolean(window.attributes['AXFullScreen'].value());
+
+const applicationProcesses = () =>
+  Application('System Events').applicationProcesses;
+
+const isFullScreenMenuItem = (menuItem) =>
+   isFullScreenMenuItemName(String(menuItem.title()))
+
+const isFullScreenMenuItemName = (itemName) =>
+  MENU_ITEM_NAMES.includes(itemName);
+
+const SEApp = (appName) =>
+  applicationProcesses()[appName];
+
+const isAppRunning = (appName) =>
+  Boolean(SEApp(appName).exists());
+
+const getFrontMostApp = () =>
+  applicationProcesses().whose({'frontmost': true});
+
+const getFrontMostAppName = () =>
+  String(getFrontMostApp().name());

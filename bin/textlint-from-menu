@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+export PATH='/usr/local/bin:/usr/bin:/bin'
+result=$(cat - | /usr/local/bin/textlint --stdin 2>&1)
+[[ result != '' ]] && /usr/bin/osascript -e 'display notification "'"$result"'"'

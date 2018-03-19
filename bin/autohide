@@ -1,0 +1,40 @@
+#!/usr/bin/env osascript -l JavaScript
+
+function run(...argv) {
+  runMain(...argv);
+}
+
+const runMain = (argv) => {
+  const reactivateAppName = getFrontMostAppName();
+  for (const appName of argv) {
+    if (!isAppRunning(appName)) {
+      console.log(`Skipping (Not Running): ${appName}`);
+      continue;
+    }
+    if (getFrontMostAppName() === appName) {
+      console.log(`Skipping (Using in most-front): ${appName}`);
+      continue;
+    }
+    if (SEApp(appName).visible() === false) {
+      console.log(`Skipping (Already invisible): ${appName}`);
+      continue;
+    }
+    console.log(`Hiding: ${appName}`);
+    SEApp(appName).visible = false;
+  }
+}
+
+const applicationProcesses = () =>
+  Application('System Events').applicationProcesses;
+
+const SEApp = (appName) =>
+  applicationProcesses()[appName];
+
+const isAppRunning = (appName) =>
+  Boolean(SEApp(appName).exists());
+
+const getFrontMostApp = () =>
+  applicationProcesses().whose({'frontmost': true});
+
+const getFrontMostAppName = () =>
+  String(getFrontMostApp().name());
